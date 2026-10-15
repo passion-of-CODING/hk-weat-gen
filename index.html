@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HK WEAT Report Generator & Terminal</title>
+  <style>
+    :root {
+      --bg-dark: #0b111e;
+      --bg-card: #131c2e;
+      --bg-input: #1c2841;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --green: #4ade80;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #263554;
+      --mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      padding: 24px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      gap: 12px;
+    }
+
+    .title-group h1 {
+      font-size: 1.5rem;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .clock-box {
+      font-family: var(--mono);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: var(--green);
+    }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 960px) {
+      .grid-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Output Terminal */
+    .terminal-box {
+      background: #050811;
+      border: 1px solid #1e293b;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+      padding: 18px;
+      font-family: var(--mono);
+      font-size: 1.25rem;
+      color: var(--green);
+      word-break: break-all;
+      position: relative;
+      margin-bottom: 16px;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);
+    }
+
+    /* Token Breakdown */
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .token-pill {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+
+    .token-pill .code {
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 0.95rem;
+    }
+
+    .token-pill .desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Controls */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    select, input[type="number"], input[type="text"] {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 14px;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #050811;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: var(--bg-input);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Table of All 13 Regions */
+    .station-list {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .station-list th, .station-list td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .station-list th {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .station-list tr:hover {
+      background: rgba(56, 189, 248, 0.06);
+      cursor: pointer;
+    }
+
+    .raw-weat-cell {
+      font-family: var(--mono);
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    .region-badge {
+      font-family: var(--mono);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--amber);
+      font-weight: 700;
+    }
+
+    .checkbox-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-group">
+      <h1>
+        <span>HK WEAT TERMINAL</span>
+        <span class="badge">R-A TO R-M</span>
+      </h1>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">
+        Hong Kong Localized METAR-Style Weather Report Generator (NW &rarr; SE)
+      </p>
+    </div>
+    <div class="clock-box" id="hkClock">HKT: --/-- ----</div>
+  </header>
+
+  <div class="grid-layout">
+    <!-- LEFT COLUMN: GENERATOR & MANUAL CONTROLS -->
+    <div>
+      <div class="card">
+        <div class="card-title">
+          <span>Quick Synoptic Generator</span>
+        </div>
+
+        <div class="form-group">
+          <label for="presetRegime">HK Weather Pattern Preset</label>
+          <select id="presetRegime">
+            <option value="random">Random Realistic HK Weather</option>
+            <option value="summer_shra">SW Monsoon / Showers (-SHRA / SHRA)</option>
+            <option value="fine">Fine &amp; Ridging High (NSW / SKC)</option>
+            <option value="winter_monsoon">Fresh NE Monsoon (Windy &amp; Dry)</option>
+            <option value="tsra">Squally Thunderstorms (+TSRA / TSRA)</option>
+            <option value="spring_mist">Humid Spring Coastal Mist/Fog (BR / FG)</option>
+            <option value="typhoon">Tropical Cyclone Gale (+SHRA / High Wind)</option>
+          </select>
+        </div>
+
+        <div class="btn-group" style="margin-top: 10px;">
+          <button class="btn-primary" onclick="generateAllRegions()">
+            &#x21bb; Generate Fresh Reports (All 13 Regions)
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Single Station Custom Editor</span>
+          <button class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="setIssueTimeToNow()">Sync HKT Now</button>
+        </div>
+
+        <div class="form-group">
+          <label for="regionSelect">Region (R-A to R-M, NW &rarr; SE)</label>
+          <select id="regionSelect" onchange="loadSelectedRegionToForm()"></select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="issueDay">Day of Month (DD)</label>
+            <input type="number" id="issueDay" min="1" max="31" value="15" oninput="updateCustomWEAT()">
+          </div>
+          <div class="form-group">
+            <label for="issueTime">Time HKT (HHMM)</label>
+            <input type="text" id="issueTime" maxlength="4" value="1530" oninput="updateCustomWEAT()">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="windDir">Wind Dir (000-360&deg;)</label>
+            <input type="number" id="windDir" min="0" max="360" step="10" value="30" oninput="updateCustomWEAT()">
+          </div>
+          <div class="form-group">
+            <label for="windKmh">Wind Spd (KMH)</label>
+            <input type="number" id="windKmh" min="0" max="250" value="13" oninput="syncKnotsFromKmh(); updateCustomWEAT()">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tempC">Temperature (&deg;C)</label>
+            <input type="number" id="tempC" min="-5" max="45" value="27" oninput="updateCustomWEAT()">
+          </div>
+          <div class="form-group">
+            <label for="dewC">Dewpoint (&deg;C)</label>
+            <input type="number" id="dewC" min="-10" max="40" value="24" oninput="updateCustomWEAT()">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="visSelect">Visibility Mode</label>
+            <select id="visSelect" onchange="toggleVisInput(); updateCustomWEAT()">
+              <option value="99X99">&ge; 10 km (99X99)</option>
+              <option value="custom">Meters (&lt; 10 km)</option>
+              <option value="N-A">No Sensor (N-A)</option>
+            </select>
+          </div>
+          <div class="form-group" id="visMetersGroup" style="display:none;">
+            <label for="visMeters">Visibility (Meters)</label>
+            <input type="number" id="visMeters" min="100" max="9999" step="100" value="4500" oninput="updateCustomWEAT()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="wxCode">METAR Weather Code</label>
+          <select id="wxCode" onchange="updateCustomWEAT()">
+            <option value="-SHRA">-SHRA (Light Showers of Rain)</option>
+            <option value="SHRA">SHRA (Moderate Showers of Rain)</option>
+            <option value="+SHRA">+SHRA (Heavy Showers of Rain)</option>
+            <option value="-RA">-RA (Light Rain)</option>
+            <option value="RA">RA (Moderate Rain)</option>
+            <option value="+RA">+RA (Heavy Rain)</option>
+            <option value="TSRA">TSRA (Thunderstorm with Rain)</option>
+            <option value="+TSRA">+TSRA (Heavy Thunderstorm with Rain)</option>
+            <option value="VCSH">VCSH (Showers in Vicinity)</option>
+            <option value="VCTS">VCTS (Thunderstorm in Vicinity)</option>
+            <option value="DZ">DZ (Drizzle)</option>
+            <option value="BR">BR (Mist)</option>
+            <option value="FG">FG (Fog)</option>
+            <option value="HZ">HZ (Haze)</option>
+            <option value="NSW">NSW (Nil Significant Weather)</option>
+            <option value="SKC">SKC (Sky Clear)</option>
+          </select>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn-secondary" onclick="randomizeSingleRegion()">Randomize This Region</button>
+          <button class="btn-primary" onclick="copyCurrentReport()">Copy Report</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: ACTIVE TERMINAL & ALL 13 REGIONS BULLETIN -->
+    <div>
+      <!-- Active Report Display -->
+      <div class="card">
+        <div class="card-title">
+          <span>Active WEAT Report &amp; Decoder</span>
+          <span id="activeRegionName" style="color: var(--accent);">R-A: Lau Fau Shan / Wetland Park</span>
+        </div>
+
+        <div class="terminal-box" id="mainWeatOutput">
+          WEAT I15/1530 R-A W030-13KMH/7KN T27D24 V99X99 -SHRA
+        </div>
+
+        <div class="breakdown-grid" id="decoderGrid"></div>
+      </div>
+
+      <!-- Bulletin Table for All 13 Regions -->
+      <div class="card">
+        <div class="card-title">
+          <span>Hong Kong Regional Network Bulletin (NW &rarr; SE)</span>
+          <button class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;" onclick="copyAllBulletins()">Copy All 13</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="station-list">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Region (NW &rarr; SE)</th>
+                <th>Generated WEAT String (Click row to inspect)</th>
+              </tr>
+            </thead>
+            <tbody id="bulletinTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 13 Hong Kong Regions ordered from Northwest to Southeast (R-A to R-M)
+    const HK_REGIONS = [
+      { code: 'A', name: 'Lau Fau Shan / Wetland Park', zone: 'Far NW', tempMod: 0, windMod: 1.1, hasVis: true, prefDir: 30 },
+      { code: 'B', name: 'Yuen Long / Tin Shui Wai', zone: 'NW Plains', tempMod: 1, windMod: 0.75, hasVis: true, prefDir: 40 },
+      { code: 'C', name: 'Tuen Mun / Castle Peak', zone: 'West-NW', tempMod: 0, windMod: 0.95, hasVis: false, prefDir: 140 },
+      { code: 'D', name: 'Chek Lap Kok / HKIA (VHHH)', zone: 'West / Lantau N', tempMod: 1, windMod: 1.25, hasVis: true, prefDir: 70 },
+      { code: 'E', name: 'Tai Mo Shan / Shek Kong (VHSK)', zone: 'Central NT', tempMod: -3, windMod: 1.15, hasVis: true, prefDir: 60 },
+      { code: 'F', name: 'Tai Po / Sha Tin', zone: 'Central-East NT', tempMod: 1, windMod: 0.85, hasVis: false, prefDir: 50 },
+      { code: 'G', name: 'Tsuen Wan / Tsing Yi', zone: 'Southwest NT', tempMod: 0, windMod: 0.9, hasVis: false, prefDir: 90 },
+      { code: 'H', name: 'Kowloon Peninsula / Kai Tak', zone: 'Central Urban', tempMod: 1, windMod: 1.0, hasVis: true, prefDir: 100 },
+      { code: 'I', name: 'Central / Victoria Peak', zone: 'HK Island NW', tempMod: -1, windMod: 1.1, hasVis: true, prefDir: 80 },
+      { code: 'J', name: 'Sai Kung / High Island', zone: 'East', tempMod: 0, windMod: 1.15, hasVis: true, prefDir: 80 },
+      { code: 'K', name: 'Aberdeen / Wong Chuk Hang', zone: 'HK Island South', tempMod: 0, windMod: 0.95, hasVis: false, prefDir: 170 },
+      { code: 'L', name: 'Tseung Kwan O / Clear Water Bay', zone: 'East-SE', tempMod: 0, windMod: 1.05, hasVis: true, prefDir: 90 },
+      { code: 'M', name: 'Stanley / Cape D\'Aguilar / Waglan', zone: 'Far SE', tempMod: -1, windMod: 1.45, hasVis: true, prefDir: 80 }
+    ];
+
+    const stationReports = {};
+
+    // Format Helpers
+    function pad2(n) { return String(Math.floor(Math.abs(n))).padStart(2, '0'); }
+    function pad3(n) { return String(Math.floor(Math.abs(n))).padStart(3, '0'); }
+    function formatTemp(t) {
+      const rounded = Math.round(t);
+      return rounded < 0 ? `M${pad2(Math.abs(rounded))}` : pad2(rounded);
+    }
+    function kmhToKnots(kmh) {
+      return Math.round(kmh / 1.852);
+    }
+
+    // Get Current HKT (UTC+8)
+    function getHKTDate() {
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      return new Date(utc + (3600000 * 8));
+    }
+
+    function updateClock() {
+      const hkt = getHKTDate();
+      const dd = pad2(hkt.getDate());
+      const hh = pad2(hkt.getHours());
+      const mm = pad2(hkt.getMinutes());
+      const ss = pad2(hkt.getSeconds());
+      document.getElementById('hkClock').textContent = `HKT: Day ${dd} ${hh}:${mm}:${ss} (Issue: I${dd}/${hh}${mm})`;
+    }
+
+    // Build WEAT string from structured data
+    function buildWeatString(data) {
+      const dayStr = pad2(data.day);
+      const timeStr = String(data.time).padStart(4, '0');
+      const dirStr = pad3(data.windDir);
+      const kmh = Math.round(data.windKmh);
+      const kn = kmhToKnots(kmh);
+      const tempStr = formatTemp(data.temp);
+      const dewStr = formatTemp(data.dew);
+      return `WEAT I${dayStr}/${timeStr} R-${data.regionCode} W${dirStr}-${kmh}KMH/${kn}KN T${tempStr}D${dewStr} V${data.vis} ${data.wx}`;
+    }
+
+    // Render Token Breakdown
+    function renderDecoder(data) {
+      const reg = HK_REGIONS.find(r => r.code === data.regionCode);
+      const kn = kmhToKnots(data.windKmh);
+      const visExplanation = data.vis === '99X99'
+        ? '10 km or above'
+        : (data.vis === 'N-A' ? 'Not Available' : `${data.vis} meters`);
+
+      const items = [
+        { code: 'WEAT', desc: 'Report Prefix' },
+        { code: `I${pad2(data.day)}/${ data.time}`, desc: `Issued Day ${pad2(data.day)}, ${data.time} HKT` },
+        { code: `R-${data.regionCode}`, desc: `${reg.name} (${reg.zone})` },
+        { code: `W${pad3(data.windDir)}-${data.windKmh}KMH/${kn}KN`, desc: `Wind ${pad3(data.windDir)}° at ${data.windKmh} km/h (${kn} kt)` },
+        { code: `T${formatTemp(data.temp)}D${formatTemp(data.dew)}`, desc: `Temp ${data.temp}°C / Dewpoint ${data.dew}°C` },
+        { code: `V${data.vis}`, desc: `Visibility: ${visExplanation}` },
+        { code: `${data.wx}`, desc: `Weather Phenomenon` }
+      ];
+
+      const grid = document.getElementById('decoderGrid');
+      grid.innerHTML = items.map(item => `
+        <div class="token-pill">
+          <div class="code">${item.code}</div>
+          <div class="desc">${item.desc}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('activeRegionName').textContent = `R-${reg.code}: ${reg.name} (${reg.zone})`;
+      document.getElementById('mainWeatOutput').textContent = buildWeatString(data);
+    }
+
+    // Sync Custom Editor Inputs -> Active Report & Table
+    function updateCustomWEAT() {
+      const regionCode = document.getElementById('regionSelect').value;
+      const day = parseInt(document.getElementById('issueDay').value, 10) || 1;
+      const time = document.getElementById('issueTime').value || '0000';
+      const windDir = parseInt(document.getElementById('windDir').value, 10) || 0;
+      const windKmh = parseInt(document.getElementById('windKmh').value, 10) || 0;
+      const temp = parseInt(document.getElementById('tempC').value, 10) || 25;
+      const dew = parseInt(document.getElementById('dewC').value, 10) || 20;
+      const visMode = document.getElementById('visSelect').value;
+      const visMeters = parseInt(document.getElementById('visMeters').value, 10) || 5000;
+      const wx = document.getElementById('wxCode').value;
+
+      const vis = visMode === 'custom' ? String(visMeters) : visMode;
+
+      const data = { regionCode, day, time, windDir, windKmh, temp, dew, vis, wx };
+      stationReports[regionCode] = data;
+
+      renderDecoder(data);
+      renderBulletinTable();
+    }
+
+    function toggleVisInput() {
+      const mode = document.getElementById('visSelect').value;
+      document.getElementById('visMetersGroup').style.display = mode === 'custom' ? 'block' : 'none';
+    }
+
+    function syncKnotsFromKmh() {
+      // Handled automatically by buildWeatString
+    }
+
+    function setIssueTimeToNow() {
+      const hkt = getHKTDate();
+      const dd = hkt.getDate();
+      const hhmm = `${pad2(hkt.getHours())}${pad2(hkt.getMinutes())}`;
+      document.getElementById('issueDay').value = dd;
+      document.getElementById('issueTime').value = hhmm;
+      updateCustomWEAT();
+    }
+
+    // Generate Realistic Data for a Region Given a Regime
+    function createStationWeather(reg, regime, baseDay, baseTime) {
+      let baseTemp = 27;
+      let baseSpread = 3;
+      let baseWindKmh = 15;
+      let baseDir = reg.prefDir;
+      let wxPool = ['-SHRA', 'SHRA', 'VCSH', 'NSW'];
+      let vis = '99X99';
+
+      if (regime === 'summer_shra') {
+        baseTemp = 28; baseSpread = 3; baseWindKmh = 16; baseDir = 210;
+        wxPool = ['-SHRA', 'SHRA', 'VCSH', '-RA'];
+      } else if (regime === 'fine') {
+        baseTemp = 29; baseSpread = 6; baseWindKmh = 12; baseDir = 90;
+        wxPool = ['NSW', 'SKC'];
+      } else if (regime === 'winter_monsoon') {
+        baseTemp = 17; baseSpread = 7; baseWindKmh = 28; baseDir = 40;
+        wxPool = ['NSW', 'HZ', '-RA'];
+      } else if (regime === 'tsra') {
+        baseTemp = 25; baseSpread = 1; baseWindKmh = 35; baseDir = 190;
+        wxPool = ['TSRA', '+TSRA', '+SHRA', 'VCTS'];
+      } else if (regime === 'spring_mist') {
+        baseTemp = 22; baseSpread = 1; baseWindKmh = 10; baseDir = 110;
+        wxPool = ['BR', 'FG', 'DZ'];
+      } else if (regime === 'typhoon') {
+        baseTemp = 25; baseSpread = 1; baseWindKmh = 75; baseDir = 70;
+        wxPool = ['+SHRA', '+RA', 'TSRA'];
+      } else {
+        // Random realistic mix
+        const regimes = ['summer_shra', 'fine', 'winter_monsoon', 'tsra', 'spring_mist'];
+        return createStationWeather(reg, regimes[Math.floor(Math.random() * regimes.length)], baseDay, baseTime);
+      }
+
+      // Apply Regional Microclimate Offsets
+      const jitterDir = (Math.floor(Math.random() * 5) - 2) * 10;
+      let windDir = (baseDir + jitterDir + 360) % 360;
+      if (windDir === 0) windDir = 360;
+
+      const windKmh = Math.max(2, Math.round(baseWindKmh * reg.windMod + (Math.random() * 6 - 3)));
+      const temp = Math.round(baseTemp + reg.tempMod + (Math.random() * 2 - 1));
+      const spread = Math.max(0, Math.round(baseSpread + (Math.random() * 2 - 1)));
+      const dew = Math.min(temp, temp - spread);
+      const wx = wxPool[Math.floor(Math.random() * wxPool.length)];
+
+      // Determine visibility
+      if (!reg.hasVis && Math.random() < 0.35) {
+        vis = 'N-A';
+      } else if (wx === 'FG') {
+        vis = String(Math.floor(Math.random() * 6 + 2) * 100); // 200 - 700m
+      } else if (wx === '+TSRA' || wx === '+SHRA' || wx === '+RA') {
+        vis = String(Math.floor(Math.random() * 20 + 12) * 100); // 1200 - 3100m
+      } else if (wx === 'BR' || wx === 'TSRA' || wx === 'SHRA' || wx === 'HZ') {
+        vis = String(Math.floor(Math.random() * 45 + 35) * 100); // 3500 - 7900m
+      } else {
+        vis = '99X99';
+      }
+
+      return {
+        regionCode: reg.code,
+        day: baseDay,
+        time: baseTime,
+        windDir,
+        windKmh,
+        temp,
+        dew,
+        vis,
+        wx
+      };
+    }
+
+    function generateAllRegions() {
+      const regime = document.getElementById('presetRegime').value;
+      const day = parseInt(document.getElementById('issueDay').value, 10) || 15;
+      const time = document.getElementById('issueTime').value || '1530';
+
+      HK_REGIONS.forEach(reg => {
+        stationReports[reg.code] = createStationWeather(reg, regime, day, time);
+      });
+
+      loadSelectedRegionToForm();
+      renderBulletinTable();
+    }
+
+    function randomizeSingleRegion() {
+      const code = document.getElementById('regionSelect').value;
+      const reg = HK_REGIONS.find(r => r.code === code);
+      const regime = document.getElementById('presetRegime').value;
+      const day = parseInt(document.getElementById('issueDay').value, 10) || 15;
+      const time = document.getElementById('issueTime').value || '1530';
+
+      stationReports[code] = createStationWeather(reg, regime, day, time);
+      loadSelectedRegionToForm();
+      renderBulletinTable();
+    }
+
+    function loadSelectedRegionToForm() {
+      const code = document.getElementById('regionSelect').value;
+      const data = stationReports[code];
+      if (!data) return;
+
+      document.getElementById('issueDay').value = data.day;
+      document.getElementById('issueTime').value = data.time;
+      document.getElementById('windDir').value = data.windDir;
+      document.getElementById('windKmh').value = data.windKmh;
+      document.getElementById('tempC').value = data.temp;
+      document.getElementById('dewC').value = data.dew;
+
+      if (data.vis === '99X99' || data.vis === 'N-A') {
+        document.getElementById('visSelect').value = data.vis;
+      } else {
+        document.getElementById('visSelect').value = 'custom';
+        document.getElementById('visMeters').value = data.vis;
+      }
+      toggleVisInput();
+
+      document.getElementById('wxCode').value = data.wx;
+      renderDecoder(data);
+    }
+
+    function selectRegionRow(code) {
+      document.getElementById('regionSelect').value = code;
+      loadSelectedRegionToForm();
+    }
+
+    function renderBulletinTable() {
+      const tbody = document.getElementById('bulletinTableBody');
+      tbody.innerHTML = HK_REGIONS.map(reg => {
+        const data = stationReports[reg.code];
+        const raw = buildWeatString(data);
+        return `
+          <tr onclick="selectRegionRow('${reg.code}')">
+            <td><span class="region-badge">R-${reg.code}</span></td>
+            <td>
+              <div style="font-weight: 600;">${reg.name}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${reg.zone}</div>
+            </td>
+            <td class="raw-weat-cell">${raw}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function copyCurrentReport() {
+      const text = document.getElementById('mainWeatOutput').textContent.trim();
+      navigator.clipboard.writeText(text);
+    }
+
+    function copyAllBulletins() {
+      const allLines = HK_REGIONS.map(r => buildWeatString(stationReports[r.code])).join('\n');
+      navigator.clipboard.writeText(allLines);
+    }
+
+    // Initialize Page
+    window.addEventListener('DOMContentLoaded', () => {
+      const sel = document.getElementById('regionSelect');
+      sel.innerHTML = HK_REGIONS.map(r =>
+        `<option value="${r.code}">R-${r.code} — ${r.name} (${r.zone})</option>`
+      ).join('');
+
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      // Generate initial 13 reports & set R-A to match your exact example
+      generateAllRegions();
+      stationReports['A'] = {
+        regionCode: 'A',
+        day: 15,
+        time: '1530',
+        windDir: 30,
+        windKmh: 13,
+        temp: 27,
+        dew: 24,
+        vis: '99X99',
+        wx: '-SHRA'
+      };
+      loadSelectedRegionToForm();
+      renderBulletinTable();
+    });
+  </script>
+</body>
+</html>
